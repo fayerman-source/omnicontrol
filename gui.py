@@ -68,7 +68,7 @@ class OmniControlGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("OmniControl // Premium Network KVM")
-        self.root.geometry("850x680")
+        self.root.geometry("850x580")
         self.root.configure(bg=COLOR_BG)
         
         # Prevent scaling layout issues
@@ -321,7 +321,8 @@ class OmniControlGUI:
             font=("Consolas", 9),
             state="disabled",
             insertbackground="white",
-            wrap="word"
+            wrap="word",
+            height=8  # Compact height to prevent layout cutoff
         )
         self.log_area.pack(fill="both", expand=True, padx=10, pady=(5, 10))
         
