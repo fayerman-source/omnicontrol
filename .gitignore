@@ -1,0 +1,11 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local KVM configurations (contains unique passphrases/IP mappings)
+config.json
+
+# Logs
+*.log
