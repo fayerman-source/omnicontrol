@@ -48,6 +48,7 @@ class KVMServer:
         # Hotkey tracking
         self.ctrl_pressed = False
         self.alt_pressed = False
+        self.last_mouse_send_time = 0
 
     def log(self, message: str):
         self.log_callback(message)
@@ -392,15 +393,19 @@ class KVMServer:
                                 # Pin virtual cursor to boundary box
                                 self.virtual_x = max(0, min(self.virtual_x, self.client_w))
                                 self.virtual_y = max(0, min(self.virtual_y, self.client_h))
-                                try:
-                                    client.send_packet({
-                                        "type": "mouse_move",
-                                        "dx": self.virtual_x,
-                                        "dy": self.virtual_y,
-                                        "relative": False
-                                    })
-                                except Exception:
-                                    pass
+                                # Send network packet throttled to max 125Hz (8ms) to prevent network congestion
+                                current_time = time.time()
+                                if current_time - self.last_mouse_send_time >= 0.008:
+                                    try:
+                                        client.send_packet({
+                                            "type": "mouse_move",
+                                            "dx": self.virtual_x,
+                                            "dy": self.virtual_y,
+                                            "relative": False
+                                        })
+                                        self.last_mouse_send_time = current_time
+                                    except Exception:
+                                        pass
                                     
                                 # Snap physical cursor back to screen center to keep it bound
                                 win32.set_mouse_position(self.center_x, self.center_y)

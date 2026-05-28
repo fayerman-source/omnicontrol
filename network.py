@@ -50,6 +50,8 @@ class SecureSocket:
     """
     def __init__(self, sock: socket.socket, passphrase: str, is_server: bool = False):
         self.sock = sock
+        # Enable TCP_NODELAY to disable Nagle's algorithm for low-latency transmission
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.passphrase = passphrase
         self.key = None
         self.lock = threading.Lock()
