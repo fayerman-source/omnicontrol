@@ -140,6 +140,42 @@ class OmniControlGUI:
         except Exception as e:
             self.log(f"Error saving config.json: {e}")
 
+    def get_local_ip(self) -> str:
+        """Robustly determines the active local IP address of this machine under any network state."""
+        import socket
+        # 1. Try local/public socket routing targets (TCP/UDP handshake simulation)
+        for target in [('8.8.8.8', 80), ('192.168.1.1', 80), ('192.168.0.1', 80), ('10.0.0.1', 80)]:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.settimeout(0.5)
+                s.connect(target)
+                ip = s.getsockname()[0]
+                s.close()
+                if ip and ip != '127.0.0.1':
+                    return ip
+            except Exception:
+                pass
+                
+        # 2. Fallback to scanning all local network adapter interfaces
+        try:
+            hostname = socket.gethostname()
+            ips = socket.getaddrinfo(hostname, None)
+            # Prioritize standard IPv4 LAN subnets
+            for item in ips:
+                ip = item[4][0]
+                if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
+                    if not ip.startswith("172.31."):  # Skip virtual WSL adapter if possible
+                        return ip
+            # Accept any non-loopback IPv4
+            for item in ips:
+                ip = item[4][0]
+                if "." in ip and ip != "127.0.0.1":
+                    return ip
+        except Exception:
+            pass
+            
+        return '127.0.0.1'
+
     def start_discovery(self):
         """Starts the background UDP auto-discovery service."""
         self.stop_discovery()
@@ -236,16 +272,8 @@ class OmniControlGUI:
         )
         lbl_ver.pack(side="left", padx=10, pady=(6, 0))
         
-        # Get active local IP for display
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            s.connect(('8.8.8.8', 80))
-            local_ip = s.getsockname()[0]
-        except Exception:
-            local_ip = '127.0.0.1'
-        finally:
-            s.close()
+        # Get active local IP for display using robust helper
+        local_ip = self.get_local_ip()
             
         lbl_ip_display = tk.Label(
             header, 
@@ -617,16 +645,8 @@ class OmniControlGUI:
             if not active_layouts:
                 self.log("WARNING: No client screen boundaries configured. Edge crossing will not switch, but Ctrl+Alt+S toggle and clipboard monitoring remain active.")
                 
-            # Log the Server's active local IP address for easy connection
-            import socket
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            try:
-                s.connect(('8.8.8.8', 80))
-                local_ip = s.getsockname()[0]
-            except Exception:
-                local_ip = '127.0.0.1'
-            finally:
-                s.close()
+            # Log the Server's active local IP address for easy connection using robust helper
+            local_ip = self.get_local_ip()
             self.log(f"INFO: Your Server IP address is: {local_ip}")
             
             self.kvm_instance = KVMServer(
