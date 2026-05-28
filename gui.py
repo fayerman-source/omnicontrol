@@ -80,6 +80,7 @@ class OmniControlGUI:
         self.port = tk.StringVar(value="8900")
         self.client_server_ip = tk.StringVar(value="127.0.0.1")
         self.is_running = False
+        self.auto_start = tk.BooleanVar(value=False)
         
         # visual layout boundaries configuration
         self.layout_config = {
@@ -100,6 +101,11 @@ class OmniControlGUI:
         self.load_config()
         self.build_ui()
         
+        # Auto-trigger service start on app launch if enabled in config or passed via CLI
+        autostart_cli = "--start" in sys.argv or "-s" in sys.argv
+        if autostart_cli or self.auto_start.get():
+            self.root.after(600, self.start_kvm_service)
+        
         # Secure exit handler to stop background discovery threads
         def on_close():
             self.stop_discovery()
@@ -117,6 +123,7 @@ class OmniControlGUI:
                     self.port.set(cfg.get("port", "8900"))
                     self.client_server_ip.set(cfg.get("server_ip", "127.0.0.1"))
                     self.mode.set(cfg.get("mode", "server"))
+                    self.auto_start.set(cfg.get("auto_start", False))
                     
                     saved_layout = cfg.get("layout", {})
                     for direction, data in saved_layout.items():
@@ -132,6 +139,7 @@ class OmniControlGUI:
             "port": self.port.get(),
             "server_ip": self.client_server_ip.get(),
             "mode": self.mode.get(),
+            "auto_start": self.auto_start.get(),
             "layout": self.layout_config
         }
         try:
@@ -412,6 +420,24 @@ class OmniControlGUI:
         tk.Label(self.form_frame, text="Port Number", fg=COLOR_MUTED, bg=COLOR_CARD, font=("Segoe UI", 9, "bold")).pack(anchor="w", pady=(5, 2))
         ent_port = tk.Entry(self.form_frame, textvariable=self.port, bg=COLOR_BG, fg=COLOR_TEXT, relief="flat", insertbackground="white", bd=0)
         ent_port.pack(fill="x", ipady=6, pady=(0, 10))
+        
+        # Sleek dark auto-start checkbutton
+        self.chk_autostart = tk.Checkbutton(
+            self.form_frame,
+            text="Auto-Start KVM on Launch",
+            variable=self.auto_start,
+            bg=COLOR_CARD,
+            fg=COLOR_TEXT,
+            activebackground=COLOR_CARD,
+            activeforeground=COLOR_TEXT,
+            selectcolor=COLOR_BG,
+            font=("Segoe UI", 9),
+            relief="flat",
+            bd=0,
+            cursor="hand2",
+            command=self.save_config
+        )
+        self.chk_autostart.pack(anchor="w", pady=(5, 10))
         
         # Mode-specific input: Server IP (Client only)
         if new_mode == "client":

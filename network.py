@@ -111,8 +111,11 @@ class SecureSocket:
         # Decrypt payload
         decrypted_bytes = OmniCrypt.encrypt_decrypt(encrypted_data, self.key, iv)
         
-        # Deserialize JSON
-        return json.loads(decrypted_bytes.decode('utf-8'))
+        # Deserialize JSON safely
+        try:
+            return json.loads(decrypted_bytes.decode('utf-8'))
+        except (UnicodeDecodeError, json.JSONDecodeError) as e:
+            raise ConnectionError("Decryption failed. Please verify that your Security Passphrases match exactly on both computers!") from e
 
     def close(self):
         """Closes the underlying socket safely."""
