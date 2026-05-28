@@ -637,8 +637,23 @@ if __name__ == "__main__":
         is_admin = False
         
     if not is_admin:
-        app.log("WARNING: Not running as Administrator. Windows may restrict input injection into secure, elevated or full-screen windows.")
+        app.log("WARNING: Not running as Administrator. Windows may restrict input injection and auto-firewall configuration.")
     else:
         app.log("SUCCESS: Running with Administrator privileges. Zero input injection restrictions.")
+        app.log("SUCCESS: Configuring Windows Firewall automatically...")
+        
+        # Auto-configure Windows Firewall in a background thread to prevent lag
+        def auto_firewall():
+            import subprocess
+            try:
+                # Add inbound rule for TCP 8900 (KVM input stream)
+                subprocess.run('netsh advfirewall firewall add rule name="OmniControl KVM TCP" dir=in action=allow protocol=TCP localport=8900', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                # Add inbound rule for UDP 8901 (KVM auto-discovery)
+                subprocess.run('netsh advfirewall firewall add rule name="OmniControl KVM UDP" dir=in action=allow protocol=UDP localport=8901', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                app.log("SUCCESS: Windows Firewall auto-configured for ports 8900 (TCP) and 8901 (UDP).")
+            except Exception as e:
+                app.log(f"WARNING: Failed to auto-configure Windows Firewall: {e}")
+                
+        threading.Thread(target=auto_firewall, daemon=True).start()
         
     root.mainloop()
