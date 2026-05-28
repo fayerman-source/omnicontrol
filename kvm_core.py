@@ -332,7 +332,7 @@ class KVMServer:
                             "flags": kbd.flags
                         })
                     except Exception:
-                        pass
+                        self._switch_to_local()
                 return 1  # Suppress key from being processed on server PC
                 
         return win32.CallNextHookEx(_keyboard_hook_id, n_code, w_param, l_param)
@@ -376,15 +376,15 @@ class KVMServer:
                             self.virtual_x += dx
                             self.virtual_y += dy
                             
-                            # Verify if virtual cursor crosses screen boundary back to server PC
+                            # Verify if virtual cursor crosses screen boundary back to server PC (with 2px return buffer)
                             returned = False
-                            if self.active_client_dir == 'left' and self.virtual_x >= self.client_w:
+                            if self.active_client_dir == 'left' and self.virtual_x >= self.client_w - 2:
                                 returned = True
-                            elif self.active_client_dir == 'right' and self.virtual_x <= 0:
+                            elif self.active_client_dir == 'right' and self.virtual_x <= 2:
                                 returned = True
-                            elif self.active_client_dir == 'above' and self.virtual_y >= self.client_h:
+                            elif self.active_client_dir == 'above' and self.virtual_y >= self.client_h - 2:
                                 returned = True
-                            elif self.active_client_dir == 'below' and self.virtual_y <= 0:
+                            elif self.active_client_dir == 'below' and self.virtual_y <= 2:
                                 returned = True
                                 
                             if returned:
@@ -405,7 +405,7 @@ class KVMServer:
                                         })
                                         self.last_mouse_send_time = current_time
                                     except Exception:
-                                        pass
+                                        self._switch_to_local()
                                     
                                 # Snap physical cursor back to screen center to keep it bound
                                 win32.set_mouse_position(self.center_x, self.center_y)
@@ -421,7 +421,7 @@ class KVMServer:
                                 "data": mouse.mouseData
                             })
                         except Exception:
-                            pass
+                            self._switch_to_local()
                             
                 return 1 # Keep cursor locked on server screen and block local injection
                 
