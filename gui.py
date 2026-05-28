@@ -236,6 +236,26 @@ class OmniControlGUI:
         )
         lbl_ver.pack(side="left", padx=10, pady=(6, 0))
         
+        # Get active local IP for display
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('8.8.8.8', 80))
+            local_ip = s.getsockname()[0]
+        except Exception:
+            local_ip = '127.0.0.1'
+        finally:
+            s.close()
+            
+        lbl_ip_display = tk.Label(
+            header, 
+            text=f"// Your IP: {local_ip}", 
+            fg=COLOR_SUCCESS, 
+            bg=COLOR_BG, 
+            font=("Segoe UI", 10, "bold")
+        )
+        lbl_ip_display.pack(side="left", padx=15, pady=(6, 0))
+        
         # Indicator Dot
         self.indicator_dot = tk.Label(
             header,
@@ -597,6 +617,18 @@ class OmniControlGUI:
             if not active_layouts:
                 self.log("WARNING: No client screen boundaries configured. Edge crossing will not switch, but Ctrl+Alt+S toggle and clipboard monitoring remain active.")
                 
+            # Log the Server's active local IP address for easy connection
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                s.connect(('8.8.8.8', 80))
+                local_ip = s.getsockname()[0]
+            except Exception:
+                local_ip = '127.0.0.1'
+            finally:
+                s.close()
+            self.log(f"INFO: Your Server IP address is: {local_ip}")
+            
             self.kvm_instance = KVMServer(
                 port=port,
                 passphrase=passphrase,
