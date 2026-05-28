@@ -414,7 +414,7 @@ class OmniControlGUI:
             
         # Common inputs: Passphrase & Port
         tk.Label(self.form_frame, text="Security Passphrase", fg=COLOR_MUTED, bg=COLOR_CARD, font=("Segoe UI", 9, "bold")).pack(anchor="w", pady=(10, 2))
-        ent_pass = tk.Entry(self.form_frame, textvariable=self.passphrase, bg=COLOR_BG, fg=COLOR_TEXT, relief="flat", insertbackground="white", bd=0, show="*")
+        ent_pass = tk.Entry(self.form_frame, textvariable=self.passphrase, bg=COLOR_BG, fg=COLOR_TEXT, relief="flat", insertbackground="white", bd=0)
         ent_pass.pack(fill="x", ipady=6, pady=(0, 10))
         
         tk.Label(self.form_frame, text="Port Number", fg=COLOR_MUTED, bg=COLOR_CARD, font=("Segoe UI", 9, "bold")).pack(anchor="w", pady=(5, 2))
