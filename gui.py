@@ -144,14 +144,14 @@ class OmniControlGUI:
         """Robustly determines the active local IP address of this machine under any network state."""
         import socket
         # 1. Try local/public socket routing targets (TCP/UDP handshake simulation)
-        for target in [('8.8.8.8', 80), ('192.168.1.1', 80), ('192.168.0.1', 80), ('10.0.0.1', 80)]:
+        for target in [('8.8.8.8', 80), ('1.1.1.1', 80), ('192.168.1.1', 80), ('10.0.0.1', 80)]:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.settimeout(0.5)
                 s.connect(target)
                 ip = s.getsockname()[0]
                 s.close()
-                if ip and ip != '127.0.0.1':
+                if ip and ip != '127.0.0.1' and not ip.startswith('127.'):
                     return ip
             except Exception:
                 pass
@@ -163,13 +163,15 @@ class OmniControlGUI:
             # Prioritize standard IPv4 LAN subnets
             for item in ips:
                 ip = item[4][0]
-                if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
-                    if not ip.startswith("172.31."):  # Skip virtual WSL adapter if possible
+                if "." in ip and not ip.startswith("127."):
+                    # Accept any common LAN prefix (192, 10, 172)
+                    if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
                         return ip
-            # Accept any non-loopback IPv4
+            
+            # Final fallback: return the first non-loopback IPv4 found
             for item in ips:
                 ip = item[4][0]
-                if "." in ip and ip != "127.0.0.1":
+                if "." in ip and not ip.startswith("127."):
                     return ip
         except Exception:
             pass
@@ -250,6 +252,9 @@ class OmniControlGUI:
     def build_ui(self):
         """Builds premium modern KVM control dashboard."""
         
+        # Get active local IP for display using robust helper
+        local_ip = self.get_local_ip()
+
         # Header banner
         header = tk.Frame(self.root, bg=COLOR_BG, height=60)
         header.pack(fill="x", padx=25, pady=(20, 10))
@@ -259,30 +264,18 @@ class OmniControlGUI:
             text="OMNICONTROL", 
             fg=COLOR_TEXT, 
             bg=COLOR_BG, 
-            font=("Segoe UI", 18, "bold")
+            font=("Sans", 18, "bold")
         )
         lbl_title.pack(side="left")
         
         lbl_ver = tk.Label(
             header, 
-            text="v1.0.0 (Windows Low-Latency KVM)", 
-            fg=COLOR_MUTED, 
-            bg=COLOR_BG, 
-            font=("Segoe UI", 9, "italic")
-        )
-        lbl_ver.pack(side="left", padx=10, pady=(6, 0))
-        
-        # Get active local IP for display using robust helper
-        local_ip = self.get_local_ip()
-            
-        lbl_ip_display = tk.Label(
-            header, 
-            text=f"// Your IP: {local_ip}", 
+            text=f"v1.0.0 | Your IP: {local_ip}", 
             fg=COLOR_SUCCESS, 
             bg=COLOR_BG, 
-            font=("Segoe UI", 10, "bold")
+            font=("Sans", 10, "bold")
         )
-        lbl_ip_display.pack(side="left", padx=15, pady=(6, 0))
+        lbl_ver.pack(side="left", padx=15, pady=(6, 0))
         
         # Indicator Dot
         self.indicator_dot = tk.Label(
@@ -290,7 +283,7 @@ class OmniControlGUI:
             text="● IDLE",
             fg=COLOR_MUTED,
             bg=COLOR_BG,
-            font=("Segoe UI", 10, "bold")
+            font=("Sans", 10, "bold")
         )
         self.indicator_dot.pack(side="right", pady=5)
 
@@ -393,6 +386,7 @@ class OmniControlGUI:
         self.btn_toggle_kvm.pack(fill="x", ipady=10)
         
         self.log("OmniControl UI initialized successfully. Ready to connect.")
+        self.log(f"Detected Local IP: {local_ip}")
 
     def switch_mode(self, new_mode: str, log_switch: bool = True):
         """Handles switching tabs between Server and Client UI styles."""
