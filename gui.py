@@ -479,7 +479,7 @@ class OmniControlGUI:
         ent_ip = ttk.Combobox(dialog, values=dev_list)
         ent_ip.pack(fill="x", padx=20, ipady=2)
         
-        # Populate current value
+        # Populate current value with smart defaults
         current_ip = self.layout_config[direction]["ip"]
         if current_ip:
             matched_text = current_ip
@@ -488,8 +488,22 @@ class OmniControlGUI:
                     matched_text = f"{d['hostname']} ({ip})"
                     break
             ent_ip.set(matched_text)
+        elif dev_list:
+            # Smart default 1: Auto-populate the first discovered client!
+            ent_ip.set(dev_list[0])
         else:
-            ent_ip.set("192.168.1.")
+            # Smart default 2: Get server's own active IP subnet prefix
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                s.connect(('8.8.8.8', 80))
+                local_ip = s.getsockname()[0]
+                prefix = ".".join(local_ip.split(".")[:-1]) + "."
+            except Exception:
+                prefix = "192.168.1."
+            finally:
+                s.close()
+            ent_ip.set(prefix)
         
         # Width / Height Fields
         res_frame = tk.Frame(dialog, bg=COLOR_BG)
