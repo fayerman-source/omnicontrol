@@ -344,20 +344,20 @@ class KVMServer:
             
             # Check edge crossing if we are in local control mode
             if not self.active_client_dir:
-                # Check Left Edge
-                if mouse.pt.x <= 0 and 'left' in self.clients:
+                # Check Left Edge (with 3px buffer)
+                if mouse.pt.x <= 2 and 'left' in self.clients:
                     self._switch_to_client('left')
                     return 1
-                # Check Right Edge
-                elif mouse.pt.x >= self.server_w - 1 and 'right' in self.clients:
+                # Check Right Edge (with 3px buffer)
+                elif mouse.pt.x >= self.server_w - 3 and 'right' in self.clients:
                     self._switch_to_client('right')
                     return 1
-                # Check Top Edge
-                elif mouse.pt.y <= 0 and 'above' in self.clients:
+                # Check Top Edge (with 3px buffer)
+                elif mouse.pt.y <= 2 and 'above' in self.clients:
                     self._switch_to_client('above')
                     return 1
-                # Check Bottom Edge
-                elif mouse.pt.y >= self.server_h - 1 and 'below' in self.clients:
+                # Check Bottom Edge (with 3px buffer)
+                elif mouse.pt.y >= self.server_h - 3 and 'below' in self.clients:
                     self._switch_to_client('below')
                     return 1
             

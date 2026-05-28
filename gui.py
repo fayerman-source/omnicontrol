@@ -711,6 +711,16 @@ class OmniControlGUI:
 
 
 if __name__ == "__main__":
+    # Enable DPI awareness to ensure correct cursor coordinate tracking on High-DPI screens
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(2) # PROCESS_PER_MONITOR_DPI_AWARE
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
     # Elevated rights reminder on startup
     # Hooks work better when running as Admin
     root = tk.Tk()
